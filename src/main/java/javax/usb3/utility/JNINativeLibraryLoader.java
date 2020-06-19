@@ -112,7 +112,15 @@ public final class JNINativeLibraryLoader {
      */
     Path destination = Paths.get(System.getProperty("java.io.tmpdir"), "javaxusb", getOSName(), getOSArch(), getLibraryFilename());
     if (destination.toFile().exists() && destination.toFile().length() > 0) {
+
+      try {
+        loadMissingLib();
+      } catch (URISyntaxException | IOException e) {
+        Logger.getLogger(JNINativeLibraryLoader.class.getName()).log(Level.SEVERE, null, e);
+      }
+
       System.load(destination.toString());
+
       return;
     }
     /**
@@ -141,12 +149,62 @@ public final class JNINativeLibraryLoader {
        * Load the native library and done.
        */
       System.load(destination.toString());
+
+      /**
+       * copy misisng windows library
+       */
+      if (getOSName().contains(OS_WINDOWS)) {
+        loadMissingLib();
+      }
+
     } catch (URISyntaxException | IOException e) {
       Logger.getLogger(JNINativeLibraryLoader.class.getName()).log(Level.SEVERE, null, e);
     }
   }
 
+  private static String getMissingLibraryName() {
+    return "libusb-1.0.dll";
+  }
+
+  private static void loadMissingLib() throws URISyntaxException, IOException {
+
+    /**
+     * If the library is already extracted then no work is required.
+     */
+    Path destination = Paths.get(System.getProperty("java.io.tmpdir"), "javaxusb", getOSName(), getOSArch(), getMissingLibraryName());
+    if (destination.toFile().exists() && destination.toFile().length() > 0) {
+      System.load(destination.toString());
+      return;
+    }
+    /**
+     * If the (extracted) destination file does not exist then extract the
+     * library from the jar file into a temp directory.
+     */
+    URL url = JNINativeLibraryLoader.class.getClassLoader().getResource("META-INF/nativelib/" + getOSName() + "/" + getOSArch() + "/" + getMissingLibraryName());
+    if (url == null) {
+      Logger.getLogger(JNINativeLibraryLoader.class.getName()).log(Level.SEVERE, "USB JNI library {0} not found for {1}", new Object[]{getMissingLibraryName(), getOSArch()});
+      throw new RuntimeException("USB JNI library " + getMissingLibraryName() + " not found for " + getOSArch());
+    }
+    /**
+     * Copy the (binary) file from within the JAR to the temporary directory.
+     */
+    Path source = Paths.get(url.toURI());
+    Logger.getLogger(JNINativeLibraryLoader.class.getName()).log(Level.FINE, "Copy USB native library from {0} to {1}", new Object[]{source, destination});
+    Logger.getLogger(JNINativeLibraryLoader.class.getName()).log(Level.INFO, "Loading native lib {0}", source);
+    Files.copy(source, destination);
+    /**
+     * Mark the file to be deleted upon exit to leave no trace.
+     */
+//      destination.toFile().deleteOnExit();
+    /**
+     * Load the native library and done.
+     */
+    System.load(destination.toString());
+
+  }
+
   //<editor-fold defaultstate="collapsed" desc="Internal Helper Methods">
+
   /**
    * Returns the operating system name. This could be "linux", "windows" or
    * "osx" or (for any other non-supported platform) the value of the "os.name"

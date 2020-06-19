@@ -1,7 +1,16 @@
-module ch.nostromo.tiffanys.engines.commons {
+module lib.javax.usb3 {
     requires java.logging;
-    requires ch.nostromo.tiffanys.commons;
-    exports ch.nostromo.tiffanys.engines.commons;
-    exports ch.nostromo.tiffanys.engines.commons.events;
-    exports ch.nostromo.tiffanys.engines.commons.opening;
+
+    exports javax.usb3;
+    exports javax.usb3.adapter;
+    exports javax.usb3.database;
+    exports javax.usb3.enumerated;
+    exports javax.usb3.event;
+    exports javax.usb3.exception;
+    exports javax.usb3.request;
+    exports javax.usb3.ri;
+    exports javax.usb3.utility;
+
+
+
 }
