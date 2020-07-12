@@ -114,7 +114,9 @@ public final class JNINativeLibraryLoader {
         if (destination.toFile().exists() && destination.toFile().length() > 0) {
 
             try {
-                loadMissingLib();
+                if (getOSName().contains(OS_WINDOWS)) {
+                    loadMissingLib();
+                }
             } catch (URISyntaxException | IOException e) {
                 Logger.getLogger(JNINativeLibraryLoader.class.getName()).log(Level.SEVERE, null, e);
             }
